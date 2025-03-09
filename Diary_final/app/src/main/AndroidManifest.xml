@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.MANAGE_MEDIA"
+        tools:ignore="ProtectedPermissions"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32"
+        tools:ignore="ScopedStorage"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32"/>
+
+    <application
+        android:requestLegacyExternalStorage="true"
+        android:networkSecurityConfig="@xml/network_config"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@drawable/legend"
+        android:label="Your Diary"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Diary_final"
+        tools:targetApi="31">
+
+        <!-- 主 Activity -->
+        <activity
+            android:name=".ui.MainActivity"
+            android:screenOrientation="portrait"
+            android:exported="true"
+            tools:ignore="LockedOrientationActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- 日记详情 Activity -->
+        <activity
+            android:name=".ui.DiaryDetailActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            tools:ignore="LockedOrientationActivity">
+        </activity>
+
+        <!-- 添加日记 Activity -->
+        <activity
+            android:name=".ui.AddDiaryActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            tools:ignore="LockedOrientationActivity">
+        </activity>
+
+        <!-- FileProvider 配置，用于共享图片文件 -->
+        <provider
+            android:exported="false"
+            android:grantUriPermissions="true"
+            android:authorities="${applicationId}.provider"
+            android:name="androidx.core.content.FileProvider">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths"/>
+        </provider>
+    </application>
+
+</manifest>
