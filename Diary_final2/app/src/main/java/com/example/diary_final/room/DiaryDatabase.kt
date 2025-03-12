@@ -27,10 +27,10 @@ abstract class DiaryDatabase : RoomDatabase() {
                 "diaries database"
             )
                 .fallbackToDestructiveMigration() // 避免数据库版本变更崩溃
-                .addCallback(object : RoomDatabase.Callback() {//这里可使用onCreate、onOpen的，只是没必要
+                .addCallback(object : RoomDatabase.Callback() {
                     override fun onCreate(db: SupportSQLiteDatabase) {
                         super.onCreate(db)
-                        // 这里可以初始化数据，例如插入默认日记，懒得
+                        // 这里可以初始化数据，例如插入默认日记
                     }
                 })
                 .build()

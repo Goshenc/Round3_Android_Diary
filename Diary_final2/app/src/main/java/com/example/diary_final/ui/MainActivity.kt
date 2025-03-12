@@ -19,8 +19,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var diaryAdapter: DiaryAdapter
     private val viewModel: MainViewModel by viewModels()
-    private val addDiaryLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {}
-//很好的启动器，lambda里花括号中的部分是当启动的 Activity 返回结果时会执行的回调代码块，什么都没有写的原因是因为这个程序使用了livedata，LiveData 监听数据库变化，自动更新 UI
+
+    private val addDiaryLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            // 新增日记后，LiveData 自动更新 UI
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,16 +37,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        diaryAdapter = DiaryAdapter(this, emptyList()) // 适配器初始为空
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
+        diaryAdapter = DiaryAdapter(this, emptyList()) // 适配器初始为空
         binding.recyclerView.adapter = diaryAdapter
     }
 
     private fun setupObservers() {
         // 监听数据库变化，更新 UI
-        viewModel.allDiaries.observe(this) { diarieshahaha ->   //在这段代码中，diarieshahaha 是你在 observe 方法的 lambda 表达式中自定义的参数名。
-            // 也就是说，它并不是在其他地方“预先定义”的，而是在这段代码中你选择用 diarieshahaha 来接收 LiveData 更新时传递过来的数据。
-            diaryAdapter.updateData(diarieshahaha)
+        viewModel.allDiaries.observe(this) { diaries ->
+            diaryAdapter.updateData(diaries)
         }
     }
 

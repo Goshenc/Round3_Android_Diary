@@ -64,13 +64,10 @@ class DiaryAdapter(
 
     // 使用 DiffUtil 优化数据更新
     fun updateData(newDiaries: List<DiaryEntity>) {
-        val diffCallback = DiaryDiffCallback(diaries, newDiaries)//DiaryDiffCallback 是一个自定义的 DiffUtil.Callback 类。
-        //它的作用是比较 diaries 和 newDiaries，找出不同之处（新增、删除、修改的项目）
-        val diffResult = DiffUtil.calculateDiff(diffCallback)//DiffUtil.Callback 是干嘛的？
-        //DiffUtil 是 Android 提供的智能计算列表差异的工具。
-        //它能找出新旧列表之间的变化，而不是直接刷新整个 RecyclerView，提高性能。
+        val diffCallback = DiaryDiffCallback(diaries, newDiaries)
+        val diffResult = DiffUtil.calculateDiff(diffCallback)
         diaries = newDiaries
-        diffResult.dispatchUpdatesTo(this) // 这一步通知 RecyclerView 只更新有变化的部分。，提高性能
+        diffResult.dispatchUpdatesTo(this) // 只刷新变化的部分，提高性能
     }
 
     // DiffUtil 计算数据变化，提高 RecyclerView 刷新效率

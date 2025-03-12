@@ -1,4 +1,6 @@
 package com.example.diary_final.ui
+import retrofit2.Call
+import retrofit2.Callback
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -25,7 +27,7 @@ import com.example.diary_final.apiitem.CityItem
 import com.example.diary_final.apiitem.WeatherItem
 import com.example.diary_final.room.DiaryEntity
 import com.example.diary_final.room.DiaryDatabase
-import com.example.diary_final.utils.Utils_Date_Location
+import com.example.diary_final.utils.Utils
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -36,7 +38,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class AddDiaryActivity : AppCompatActivity() {
-    private lateinit var locationUtils: Utils_Date_Location.LocationHelper
+    private lateinit var locationUtils: Utils.LocationHelper
     private lateinit var binding: ActivityAddDiaryBinding
     private lateinit var diaryDatabase: DiaryDatabase
     private val PERMISSION_REQUEST_CODE = 1
@@ -56,17 +58,17 @@ class AddDiaryActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         diaryDatabase = DiaryDatabase.getInstance(this)
-        locationUtils = Utils_Date_Location.LocationHelper(this)
+        locationUtils = Utils.LocationHelper(this)
 
-
+        // 选择本地图片按钮
         binding.selectImageButton.setOnClickListener { selectLocalImage() }
-
+        // 新增相机拍照按钮
         binding.takePhotoButton.setOnClickListener { openCamera() }
-
+        // 网络图片输入对话框
         binding.selectNetworkImageButton.setOnClickListener { showUrlInputDialog() }
-
+        // 保存日记
         binding.saveDiaryButton.setOnClickListener { saveDiary() }
-
+        // 刷新地点和天气
         binding.refreshWeatherLocationButton.setOnClickListener { getLocation() }
 
         val permissionsToRequest = mutableListOf<String>()
@@ -96,7 +98,6 @@ class AddDiaryActivity : AppCompatActivity() {
     }
 
     private fun openCamera() {
-
         if (!hasPermission(android.Manifest.permission.CAMERA)) {
             ActivityCompat.requestPermissions(
                 this,
@@ -105,7 +106,6 @@ class AddDiaryActivity : AppCompatActivity() {
             )
             return
         }
-        //创建一个 Intent 对象，并指定动作为 MediaStore.ACTION_IMAGE_CAPTURE，即启动相机拍照。
         val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
         if (cameraIntent.resolveActivity(packageManager) != null) {
             // 创建用于保存照片的文件
@@ -137,7 +137,7 @@ class AddDiaryActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         when {
             requestCode == 1 && resultCode == RESULT_OK && data != null -> {
-                selectedLocalImageUri = data.data//当用户选择一张图片后，图库应用会自动将该图片的 URI 填充到返回的 Intent 的 data 属性中，也就是 data.data
+                selectedLocalImageUri = data.data
                 Glide.with(this)
                     .load(selectedLocalImageUri)
                     .into(binding.selectedImageView)
@@ -155,7 +155,7 @@ class AddDiaryActivity : AppCompatActivity() {
     }
 
     private fun showUrlInputDialog() {
-        val input = EditText(this)//使用 EditText(this) 创建了一个输入框，让用户在弹出对话框中输入文本。
+        val input = EditText(this)
         input.hint = "请输入有效的图片链接"
         AlertDialog.Builder(this)
             .setTitle("输入图片URL")
@@ -183,13 +183,15 @@ class AddDiaryActivity : AppCompatActivity() {
     }
 
     private fun getLocation() {
-        locationUtils.getLocation { location ->//这里的location是由 Utils_Date_Location.LocationHelper.getLocation 方法传递的 Location 对象。
+        locationUtils.getLocation { location ->
             if (location != null) {
                 val latitude = location.latitude
                 val longitude = location.longitude
                 Log.d("AddDiaryActivity", "获取到的经纬度: 纬度 $latitude, 经度 $longitude")
                 binding.longtitudeandlatitudeTextView.text="经纬度:($latitude,$longitude)"
                 val loc = String.format("%.2f,%.2f", location.longitude, location.latitude)
+                // 更新 UI 显示当前定位
+                runOnUiThread { binding.locationTextView.text = loc }
                 // 使用协程调用 suspend 函数获取城市信息和天气
                 lifecycleScope.launch {
                     getCityIdSuspend(loc)
@@ -206,7 +208,7 @@ class AddDiaryActivity : AppCompatActivity() {
     private suspend fun getCityIdSuspend(cityName: String) {
         try {
             val weatherService = RetrofitBuilder.getCityInstance.create(WeatherService::class.java)
-            val response: Response<CityItem> = withContext(Dispatchers.IO) {////response.body() 获取 服务器返回的 JSON 数据，并转换成 CityItem 对象
+            val response: Response<CityItem> = withContext(Dispatchers.IO) {
                 weatherService.getCity(apiKey, cityName)
             }
             if (response.isSuccessful && response.body()?.code == "200") {
@@ -238,12 +240,12 @@ class AddDiaryActivity : AppCompatActivity() {
             val response: Response<WeatherItem> = withContext(Dispatchers.IO) {
                 weatherService.getWeather(apiKey, cityId)
             }
-            if (response.isSuccessful && response.body()?.code == "200") {//response.body() 获取 服务器返回的 JSON 数据，并转换成 WeatherItem 对象
-                val today = Utils_Date_Location.formatDate(Calendar.getInstance().time)//使用 Calendar.getInstance().time 获取当前时间。
-                val todayWeather = response.body()?.daily?.firstOrNull { it.todayDate == today }
+            if (response.isSuccessful && response.body()?.code == "200") {
+                val today = Utils.formatDate(Calendar.getInstance().time)
+                val todayWeather = response.body()?.daily?.firstOrNull { it.fxDate == today }
                 if (todayWeather != null) {
                     withContext(Dispatchers.Main) {
-                        binding.weatherTextView.text = todayWeather.weatheroftoday
+                        binding.weatherTextView.text = todayWeather.textDay
                     }
                 } else {
                     showToast("获取天气信息失败")
@@ -267,7 +269,7 @@ class AddDiaryActivity : AppCompatActivity() {
         val title = binding.titleEditText.text.toString()
         val article = binding.articleEditText.text.toString()
         val localImagePath = selectedLocalImageUri?.toString()
-        val date = Utils_Date_Location.formatDate(Calendar.getInstance().time)
+        val date = Utils.formatDate(Calendar.getInstance().time)
         val weather = binding.weatherTextView.text.toString()
         val location = binding.locationTextView.text.toString()
 
@@ -281,7 +283,7 @@ class AddDiaryActivity : AppCompatActivity() {
             location = location
         )
 
-        lifecycleScope.launch(Dispatchers.IO) {//在 IO线程 中启动一个协程，因为数据库操作是耗时任务，不适合在主线程中执行。
+        lifecycleScope.launch(Dispatchers.IO) {
             diaryDatabase.diaryDao().insertDiary(diaryEntity)
             withContext(Dispatchers.Main) {
                 Toast.makeText(this@AddDiaryActivity, "日记保存成功", Toast.LENGTH_SHORT).show()

@@ -15,6 +15,6 @@ data class WeatherItem(
 )
 
 data class WeatherDaily(
-    val todayDate: String,
-    val weatheroftoday: String
+    val fxDate: String,
+    val textDay: String
 )

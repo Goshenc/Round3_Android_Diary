@@ -21,7 +21,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun searchDiaries(query: String): LiveData<List<DiaryEntity>> {
-
         return diaryDao.searchDiaries("%$query%")
     }
 }
